@@ -1,7 +1,8 @@
-import { getToken } from '@/lib/sms'
+import { getToken, sendBulkSMS } from '@/lib/sms'
 import { Hono } from 'hono'
 import { handle } from 'hono/vercel'
 import prisma from '@/lib/prisma.db'
+import { message } from '@/lib/message'
 
 const app = new Hono().basePath('/api')
 
@@ -38,22 +39,20 @@ app.post('/send', async (c) => {
 
     const { data } = await getToken()
 
-    // const { data: sentResult } = await sendBulkSMS({
-    //   token: data.access_token,
-    //   // data: result?.map((item) => ({
-    //   //   mobile: item.mobile,
-    //   //   message,
-    //   // })),
-    //   data: [{ mobile: 615301507, message }],
-    // })
+    const { data: sentResult } = await sendBulkSMS({
+      token: data.access_token,
+      // data: result?.map((item) => ({
+      //   mobile: item.mobile,
+      //   message,
+      // })),
+      data: [{ mobile: 615301507, message: message, refId: '123456' }],
+    })
 
-    // if (sentResult.ResponseMessage === 'Failed.') {
-    //   throw {
-    //     message: sentResult.Data.Description,
-    //   }
-    // }
-
-    // console.log(sentResult)
+    if (sentResult.ResponseMessage === 'Failed.') {
+      throw {
+        message: sentResult.Data.Description,
+      }
+    }
 
     // await prisma.customer.updateMany({
     //   where: { id: { in: result.map((item) => item.id) } },
@@ -67,7 +66,7 @@ app.post('/send', async (c) => {
       page: parseInt(page),
       pages,
       total,
-      // response: sentResult,
+      response: sentResult,
       data: result,
     })
   } catch (error: any) {
@@ -82,17 +81,36 @@ app.post('/send', async (c) => {
 
 app.post('/webhook', async (c) => {
   try {
-    const { messageId, mobile, dlrStatus, dlrDateTime } = await c.req.json()
-
     const body = await c.req.json()
 
-    console.log({ body })
+    const parsedBody: {
+      messageId: string
+      refId: string
+      mobile: number
+      dlrStatus: '2' | '3' | '5'
+      dlrTime: string
+    } = {
+      messageId: body?.MessageID,
+      refId: body?.RefID,
+      mobile: body?.Destination,
+      dlrStatus: body?.DLRStatus,
+      dlrTime: body?.DLRTime,
+    }
+
+    const status = {
+      '2': 'Delivered',
+      '3': 'Expired',
+      '5': 'Undelivered',
+    }
+
+    console.log({
+      body,
+      parsed: { ...parsedBody, status: status[parsedBody.dlrStatus] },
+    })
 
     return c.json({
-      messageId,
-      mobile,
-      dlrStatus,
-      dlrDateTime,
+      ...parsedBody,
+      status: status[parsedBody.dlrStatus],
     })
   } catch (error: any) {
     const e = {

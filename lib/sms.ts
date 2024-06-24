@@ -20,14 +20,16 @@ export const sendSingleSMS = async ({
   token,
   mobile,
   message,
+  refId,
 }: {
   token: string
   mobile: number
   message: string
+  refId?: string | number
 }): Promise<AxiosResponse<SMSResponse>> => {
   return await axios.post(
     `${BASE_URL}/SendSMS`,
-    { mobile, message },
+    { mobile, message, ...{ refId } },
     {
       headers: {
         'Content-Type': 'application/json',
@@ -42,7 +44,7 @@ export const sendBulkSMS = async ({
   data,
 }: {
   token: string
-  data: { mobile: number; message: string }[]
+  data: { mobile: number; message: string; refId?: string | number }[]
 }): Promise<AxiosResponse<SMSResponse>> => {
   return await axios.post(`${BASE_URL}/Outbound/SendBulkSMS `, data, {
     headers: {

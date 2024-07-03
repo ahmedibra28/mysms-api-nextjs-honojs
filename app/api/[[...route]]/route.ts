@@ -83,35 +83,39 @@ app.post('/webhook', async (c) => {
   try {
     const body = await c.req.json()
 
-    const parsedBody: {
-      messageId: string
-      refId: string
-      mobile: number
-      dlrStatus: '2' | '3' | '5'
-      dlrTime: string
-    } = {
-      messageId: body?.MessageID,
-      refId: body?.RefID,
-      mobile: body?.Destination,
-      dlrStatus: body?.DLRStatus,
-      dlrTime: body?.DLRTime,
-    }
+    console.log(body)
 
-    const status = {
-      '2': 'Delivered',
-      '3': 'Expired',
-      '5': 'Undelivered',
-    }
+    return c.json(body)
 
-    console.log({
-      body,
-      parsed: { ...parsedBody, status: status[parsedBody.dlrStatus] },
-    })
+    // const parsedBody: {
+    //   messageId: string
+    //   refId: string
+    //   mobile: number
+    //   dlrStatus: '2' | '3' | '5'
+    //   dlrTime: string
+    // } = {
+    //   messageId: body?.MessageID,
+    //   refId: body?.RefID,
+    //   mobile: body?.Destination,
+    //   dlrStatus: body?.DLRStatus,
+    //   dlrTime: body?.DLRTime,
+    // }
 
-    return c.json({
-      ...parsedBody,
-      status: status[parsedBody.dlrStatus],
-    })
+    // const status = {
+    //   '2': 'Delivered',
+    //   '3': 'Expired',
+    //   '5': 'Undelivered',
+    // }
+
+    // console.log({
+    //   body,
+    //   parsed: { ...parsedBody, status: status[parsedBody.dlrStatus] },
+    // })
+
+    // return c.json({
+    //   ...parsedBody,
+    //   status: status[parsedBody.dlrStatus],
+    // })
   } catch (error: any) {
     const e = {
       message: error?.response?.data?.error || error?.message,

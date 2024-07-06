@@ -35,3 +35,15 @@ export type SMSResponse = {
     }
   }
 }
+
+export type WebhookProp = {
+  ID: string
+  MessageID: string
+  Origin: string
+  Destination: string
+  MessagePart: string
+  PartNo: string
+  StatusId: '2' | '3' | '5'
+  Status: string
+  DeliveredOn: string
+}

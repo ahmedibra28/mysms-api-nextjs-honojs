@@ -3,6 +3,7 @@ import { Hono } from 'hono'
 import { handle } from 'hono/vercel'
 import prisma from '@/lib/prisma.db'
 import { message } from '@/lib/message'
+import { WebhookProp } from '@/types'
 
 const app = new Hono().basePath('/api')
 
@@ -45,7 +46,7 @@ app.post('/send', async (c) => {
       //   mobile: item.mobile,
       //   message,
       // })),
-      data: [{ mobile: 615301507, message: message, refId: '123456' }],
+      data: [{ mobile: 615301507, message, refId: '123456789' }],
     })
 
     if (sentResult.ResponseMessage === 'Failed.') {
@@ -81,41 +82,26 @@ app.post('/send', async (c) => {
 
 app.post('/webhook', async (c) => {
   try {
-    const body = await c.req.json()
+    const body = (await c.req.json()) as WebhookProp
 
-    console.log(body)
+    const status = {
+      '2': 'Delivered',
+      '3': 'Expired',
+      '5': 'Undelivered',
+    }
 
-    return c.json(body)
+    const parsedBody = {
+      messageId: body?.MessageID,
+      mobile: body?.Destination,
+      dlrStatus: body?.StatusId,
+      dlrTime: body?.DeliveredOn,
+      receivedAt: new Date(body.DeliveredOn),
+      status: status[body.StatusId],
+    }
 
-    // const parsedBody: {
-    //   messageId: string
-    //   refId: string
-    //   mobile: number
-    //   dlrStatus: '2' | '3' | '5'
-    //   dlrTime: string
-    // } = {
-    //   messageId: body?.MessageID,
-    //   refId: body?.RefID,
-    //   mobile: body?.Destination,
-    //   dlrStatus: body?.DLRStatus,
-    //   dlrTime: body?.DLRTime,
-    // }
+    console.log(parsedBody)
 
-    // const status = {
-    //   '2': 'Delivered',
-    //   '3': 'Expired',
-    //   '5': 'Undelivered',
-    // }
-
-    // console.log({
-    //   body,
-    //   parsed: { ...parsedBody, status: status[parsedBody.dlrStatus] },
-    // })
-
-    // return c.json({
-    //   ...parsedBody,
-    //   status: status[parsedBody.dlrStatus],
-    // })
+    return c.json(parsedBody)
   } catch (error: any) {
     const e = {
       message: error?.response?.data?.error || error?.message,

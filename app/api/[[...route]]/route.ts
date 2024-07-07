@@ -13,7 +13,7 @@ app.get('/', async (c) => {
 
 app.post('/send', async (c) => {
   try {
-    const { page } = c.req.query() as { page: string }
+    const { page, limit } = c.req.query() as { page: string; limit: string }
 
     if (!page || parseInt(page) < 1)
       throw {
@@ -21,7 +21,13 @@ app.post('/send', async (c) => {
         status: 400,
       }
 
-    const pageSize = 5
+    if (!limit || parseInt(limit) < 1)
+      throw {
+        message: 'limit is required',
+        status: 400,
+      }
+
+    const pageSize = parseInt(limit)
     const skip = (parseInt(page) - 1) * pageSize
 
     const query = { where: { status: 'Pending' } }
@@ -38,15 +44,19 @@ app.post('/send', async (c) => {
 
     const pages = Math.ceil(total / pageSize)
 
+    if (total < 1)
+      throw {
+        message: 'There are no pending numbers',
+      }
+
     const { data } = await getToken()
 
     const { data: sentResult } = await sendBulkSMS({
       token: data.access_token,
-      // data: result?.map((item) => ({
-      //   mobile: item.mobile,
-      //   message,
-      // })),
-      data: [{ mobile: 615301507, message, refId: '123456789' }],
+      data: result?.map((item) => ({
+        mobile: item.mobile,
+        message,
+      })),
     })
 
     if (sentResult.ResponseMessage === 'Failed.') {
@@ -55,10 +65,10 @@ app.post('/send', async (c) => {
       }
     }
 
-    // await prisma.customer.updateMany({
-    //   where: { id: { in: result.map((item) => item.id) } },
-    //   data: { status: 'Sent' },
-    // })
+    await prisma.customer.updateMany({
+      where: { mobile: { in: result.map((item) => item.mobile) } },
+      data: { status: 'Sent' },
+    })
 
     return c.json({
       startIndex: skip + 1,
@@ -91,13 +101,20 @@ app.post('/webhook', async (c) => {
     }
 
     const parsedBody = {
-      messageId: body?.MessageID,
+      id: body?.MessageID,
       mobile: body?.Destination,
-      dlrStatus: body?.StatusId,
-      dlrTime: body?.DeliveredOn,
-      receivedAt: new Date(body.DeliveredOn),
-      status: status[body.StatusId],
+      deliveredAt: new Date(body.DeliveredOn),
+      deliveryStatus: status[body.StatusId],
     }
+
+    const mobile = parsedBody.mobile.startsWith('252')
+      ? parsedBody.mobile.slice(3)
+      : parsedBody.mobile
+
+    await prisma.customer.update({
+      where: { mobile: parseInt(mobile) },
+      data: { status: parsedBody.deliveryStatus },
+    })
 
     console.log(parsedBody)
 

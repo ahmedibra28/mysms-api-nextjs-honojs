@@ -17,4 +17,6 @@ model Customer {
   id     Int    @id @default(autoincrement())
   mobile Int    @unique
   status String @default("Pending")
+
+  @@map("customers")
 }

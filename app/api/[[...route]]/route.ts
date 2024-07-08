@@ -107,17 +107,16 @@ app.post('/webhook', async (c) => {
       deliveryStatus: status[body.StatusId],
     }
 
-    const mobile = parsedBody.mobile.startsWith('252')
+    const mobile = parsedBody?.mobile?.startsWith('252')
       ? parsedBody.mobile.slice(3)
-      : parsedBody.mobile
+      : parsedBody?.mobile
 
-    await prisma.customer.update({
-      where: { mobile: parseInt(mobile) },
-      data: { status: parsedBody.deliveryStatus },
-    })
-
-    console.log(parsedBody)
-
+    if (mobile) {
+      await prisma.customer.update({
+        where: { mobile: parseInt(mobile) },
+        data: { status: parsedBody.deliveryStatus },
+      })
+    }
     return c.json(parsedBody)
   } catch (error: any) {
     const e = {

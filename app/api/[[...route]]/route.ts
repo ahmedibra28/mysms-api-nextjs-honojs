@@ -100,6 +100,8 @@ app.post('/webhook', async (c) => {
       '5': 'Undelivered',
     }
 
+    console.log('BODY: => ', body)
+
     const parsedBody = {
       id: body?.MessageID,
       mobile: body?.Destination,

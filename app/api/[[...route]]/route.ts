@@ -107,6 +107,8 @@ app.post('/webhook', async (c) => {
       deliveryStatus: status[body.StatusId],
     }
 
+    console.log(parsedBody)
+
     const mobile = parsedBody?.mobile?.startsWith('252')
       ? parsedBody.mobile.slice(3)
       : parsedBody?.mobile

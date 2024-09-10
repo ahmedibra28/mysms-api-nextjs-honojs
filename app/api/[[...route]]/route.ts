@@ -5,7 +5,7 @@ import prisma from '@/lib/prisma.db'
 import { message } from '@/lib/message'
 import { WebhookProp } from '@/types'
 
-const app = new Hono().basePath('/api')
+const app = new Hono().basePath('/api/v1')
 
 app.get('/', async (c) => {
   return c.json({ message: 'Welcome to my SMS API 🚀' })
@@ -99,8 +99,6 @@ app.post('/webhook', async (c) => {
       '3': 'Expired',
       '5': 'Undelivered',
     }
-
-    console.log('BODY: => ', body)
 
     const parsedBody = {
       id: body?.MessageID,

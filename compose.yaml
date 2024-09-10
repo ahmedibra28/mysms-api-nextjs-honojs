@@ -9,6 +9,11 @@ services:
       - db
     environment:
       - DATABASE_URL=postgresql://postgres:password@db:5433/mysms
+      - USERNAME=
+      - PASSWORD=
+      - GRANT_TYPE=
+      - TOKEN_URL=
+      - BASE_URL=
 
   db:
     image: postgres:16
